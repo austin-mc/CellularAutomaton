@@ -23,7 +23,12 @@ func main() {
 	if err != nil {
 		log.Fatal("Invalid input")
 	}
-	generateFirstRow(width)
+	prev := generateFirstRow(width)
+
+	for {
+		printRow(prev)
+		prev = generateRow(prev)
+	}
 
 }
 
@@ -33,14 +38,15 @@ func generateFirstRow(width int) Row {
 	currentR := make([]int, width)
 	currentG := make([]int, width)
 	currentB := make([]int, width)
-	currentChar := make([]rune, width)
+	currentChar := make([]int, width)
 
 	// Randomly creating the first row
 	for i := 0; i < width; i++ {
 		currentR[i] = rand.Intn(256)
 		currentG[i] = rand.Intn(256)
 		currentB[i] = rand.Intn(256)
-		currentChar[i] = rune(rand.Intn(94) + 33)
+		// Chars MUST be in [32, 127)
+		currentChar[i] = rand.Intn(94) + 33
 	}
 
 	return Row{
@@ -56,14 +62,17 @@ func generateRow(prev Row) Row {
 	currentR := make([]int, len(prev.r))
 	currentG := make([]int, len(prev.g))
 	currentB := make([]int, len(prev.b))
-	currentChar := make([]rune, len(prev.chars))
+	currentChar := make([]int, len(prev.chars)) // ASCII values for the characters
 
 	// Randomly creating the first row
 	for i := 0; i < len(prev.r); i++ {
+
+		// FIXME
 		currentR[i] = rand.Intn(256)
 		currentG[i] = rand.Intn(256)
 		currentB[i] = rand.Intn(256)
-		currentChar[i] = rune(rand.Intn(94) + 33)
+		// Chars MUST be in [32, 127)
+		currentChar[i] = rand.Intn(95) + 32
 	}
 
 	return Row{
@@ -74,8 +83,46 @@ func generateRow(prev Row) Row {
 }
 
 // generateRValue generates the R value for the current cell based on the left, center, and right cells above it
+func generateChar(left int, center int, right int) int {
+	// Propagating spaces outwards
+	if left == 32 || right == 32 {
+		return 32
+	}
+	result := 0
+
+	if left <= 79 {
+		result += left
+	}
+	if center <= 79 {
+		result += center
+	}
+	if right <= 79 {
+		result += right
+	}
+
+	if result >= 127 {
+		result = (result % 127) + 32
+	}
+
+	return result
+}
+
+// generateRValue generates the R value for the current cell based on the left, center, and right cells above it
 func generateRValue(left int, center int, right int) int {
 
+	return 0
+}
+
+// generateGValue generates the G value for the current cell based on the left, center, and right cells above it
+func generateGValue(left int, center int, right int) int {
+
+	return 0
+}
+
+// generateBValue generates the R value for the current cell based on the left, center, and right cells above it
+func generateBValue(left int, center int, right int) int {
+
+	return 0
 }
 
 // printRow prints the row to the terminal with the correct colors
