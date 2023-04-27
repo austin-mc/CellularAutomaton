@@ -1,134 +1,182 @@
+/*
+Austin Christiansen
+Cellular Automata Generator
+*/
+
 package main
 
 import (
-	"fmt"
-	"log"
+	"image"
+	"image/color"
+	"image/draw"
+	"image/gif"
 	"math/rand"
 	"time"
 )
 
-type Row struct {
-	r     []int
-	g     []int
-	b     []int
-	chars []rune
+var animation gif.GIF
+
+const (
+	// Initial setup
+	width      = 600
+	height     = 600
+	squareSize = width / 100
+	frameCount = height + 1 // Total number of frames is height + 1 since the first grid is the initial grid
+	frameDelay = 5          // 5 ms delay between frames
+)
+
+/*
+Global Colors
+*/
+
+// Base Colors
+var white = color.RGBA{249, 249, 249, 255}
+var black = color.RGBA{0, 0, 0, 255}
+
+// Cell Colors (https://www.color-hex.com/color-palette/5452)
+var red = color.RGBA{217, 83, 79, 255}
+var lightBlue = color.RGBA{91, 192, 222, 255}
+var green = color.RGBA{92, 184, 92, 255}
+var darkBlue = color.RGBA{66, 139, 202, 255}
+
+var myPallette = color.Palette{
+	white,
+	black,
+	red,
+	lightBlue,
+	green,
+	darkBlue,
 }
 
 func main() {
+	animation = gif.GIF{LoopCount: frameCount}
+	// Random used only to generate color of the first cell
 	rand.Seed(time.Now().Unix())
-	fmt.Println("Welcome to my command line cellular automata generator!")
-	fmt.Println("Please enter the number of characters per line: ")
-	var width int
-	_, err := fmt.Scanf("%d", &width)
-	if err != nil {
-		log.Fatal("Invalid input")
-	}
-	prev := generateFirstRow(width)
 
-	for {
-		printRow(prev)
-		prev = generateRow(prev)
+	// Grid values will be 0 initially indicating white color
+	grid := make([][]int, 100)
+	for i := range grid {
+		grid[i] = make([]int, 100)
+	}
+
+	var img *image.Paletted
+	for i := 0; i < frameCount; i++ {
+		if i != 0 {
+			grid = updateGrid(grid, i-1)
+		}
+		img = drawNextFrame(width, height, squareSize, grid)
+		appendImage(img)
 	}
 
 }
 
-// generateFirstRow generates the first row of the cellular automata
-func generateFirstRow(width int) Row {
-	// Create a slice of ints for the RGB values and characters
-	currentR := make([]int, width)
-	currentG := make([]int, width)
-	currentB := make([]int, width)
-	currentChar := make([]int, width)
+// Following cellular automata rules to update the grid
+// Each index must be an int in range [0, 5)
+func updateGrid(grid [][]int, row int) [][]int {
 
-	// Randomly creating the first row
-	for i := 0; i < width; i++ {
-		currentR[i] = rand.Intn(256)
-		currentG[i] = rand.Intn(256)
-		currentB[i] = rand.Intn(256)
-		// Chars MUST be in [32, 127)
-		currentChar[i] = rand.Intn(94) + 33
-	}
+	if row == 0 {
+		// First row is all white except the center cell
+		// Which will be given a random color
+		middle := width / 2
+		grid[row][middle] = rand.Intn(4) + 1
+	} else {
+		prevRow := grid[row-1]
+		currentRow := grid[row]
 
-	return Row{
-		r: currentR,
-		g: currentG,
-		b: currentB,
+		var left int
+		var center int
+		var right int
+
+		for i := 0; i < width; i++ {
+			// getting adjacent 3 cells from the previous row
+			// If the cell is on the edge, wrap around to the other side
+			if i == 0 {
+				left = prevRow[width-1]
+			} else {
+				left = prevRow[i-1]
+			}
+			if i == width-1 {
+				right = prevRow[0]
+			} else {
+				right = prevRow[i+1]
+			}
+			center = prevRow[i]
+
+			currentRow[i] = generateCell(left, center, right)
+		}
 	}
+	return grid
 }
 
-// generateRow generates the next row based on the previous row
-func generateRow(prev Row) Row {
-	// Create a slice of ints for the RGB values and characters
-	currentR := make([]int, len(prev.r))
-	currentG := make([]int, len(prev.g))
-	currentB := make([]int, len(prev.b))
-	currentChar := make([]int, len(prev.chars)) // ASCII values for the characters
-
-	// Randomly creating the first row
-	for i := 0; i < len(prev.r); i++ {
-
-		// FIXME
-		currentR[i] = rand.Intn(256)
-		currentG[i] = rand.Intn(256)
-		currentB[i] = rand.Intn(256)
-		// Chars MUST be in [32, 127)
-		currentChar[i] = rand.Intn(95) + 32
+// Generate the color for the cell given the 3 previous colors
+func generateCell(left int, center int, right int) int {
+	if left == 0 && center == 0 && right == 0 {
+		return 0
 	}
 
-	return Row{
-		r: currentR,
-		g: currentG,
-		b: currentB,
-	}
 }
 
-// generateRValue generates the R value for the current cell based on the left, center, and right cells above it
-func generateChar(left int, center int, right int) int {
-	// Propagating spaces outwards
-	if left == 32 || right == 32 {
-		return 32
-	}
-	result := 0
+// // Draws the initial grid for the automata
+// func drawGrid(width int, height int, squareSize int) *image.Paletted {
+// 	img := image.NewRGBA(image.Rect(0, 0, width, height))
+// 	draw.Draw(img, img.Bounds(), &image.Uniform{black}, image.Point{}, draw.Src)
+// 	for x := 0; x < 100; x++ {
+// 		for y := 0; y < 100; y++ {
+// 			// Draw the squares to make the grid
+// 			drawSquare(x, y, squareSize, white, img)
+// 		}
+// 	}
 
-	if left <= 79 {
-		result += left
-	}
-	if center <= 79 {
-		result += center
-	}
-	if right <= 79 {
-		result += right
+// 	// Convert to image.Paletted to be used in gif
+// 	palettedImage := image.NewPaletted(img.Bounds(), myPallette)
+// 	draw.Draw(palettedImage, palettedImage.Rect, img, img.Bounds().Min, draw.Src)
+// 	return palettedImage
+// }
+
+func drawNextFrame(width int, height int, squareSize int, grid [][]int) *image.Paletted {
+	img := image.NewRGBA(image.Rect(0, 0, width, height))
+	draw.Draw(img, img.Bounds(), &image.Uniform{black}, image.Point{}, draw.Src)
+	for x := 0; x < 100; x++ {
+		for y := 0; y < 100; y++ {
+			switch grid[x][y] {
+			case 0:
+				drawSquare(x, y, squareSize, white, img)
+			case 1:
+				drawSquare(x, y, squareSize, red, img)
+			case 2:
+				drawSquare(x, y, squareSize, lightBlue, img)
+			case 3:
+				drawSquare(x, y, squareSize, green, img)
+			case 4:
+				drawSquare(x, y, squareSize, darkBlue, img)
+			}
+		}
 	}
 
-	if result >= 127 {
-		result = (result % 127) + 32
-	}
-
-	return result
+	// Convert to image.Paletted to be used in gif
+	palettedImage := image.NewPaletted(img.Bounds(), myPallette)
+	draw.Draw(palettedImage, palettedImage.Rect, img, img.Bounds().Min, draw.Src)
+	return palettedImage
 }
 
-// generateRValue generates the R value for the current cell based on the left, center, and right cells above it
-func generateRValue(left int, center int, right int) int {
-
-	return 0
-}
-
-// generateGValue generates the G value for the current cell based on the left, center, and right cells above it
-func generateGValue(left int, center int, right int) int {
-
-	return 0
-}
-
-// generateBValue generates the R value for the current cell based on the left, center, and right cells above it
-func generateBValue(left int, center int, right int) int {
-
-	return 0
-}
-
-// printRow prints the row to the terminal with the correct colors
-func printRow(row Row) {
-	for i := 0; i < len(row.r); i++ {
-		fmt.Printf("\033[38;2;%d;%d;%dm%c\033[0m", row.r[i], row.g[i], row.b[i], row.chars[i])
+// Draws a square on image m at the specified x and y coordinates
+func drawSquare(x int, y int, squareSize int, color color.RGBA, m *image.RGBA) {
+	startX := x * squareSize
+	if x != 0 {
+		startX++
 	}
-	fmt.Println()
+	startY := y * squareSize
+	if y != 0 {
+		startY++
+	}
+	endX := (x * squareSize) + squareSize
+	endY := (y * squareSize) + squareSize
+	square := image.Rect(startX, startY, endX, endY)
+	draw.Draw(m, square, &image.Uniform{color}, image.Point{}, draw.Src)
+}
+
+// Appends the image to the animation variable
+func appendImage(img *image.Paletted) {
+	animation.Image = append(animation.Image, img)
+	animation.Delay = append(animation.Delay, frameDelay)
 }
