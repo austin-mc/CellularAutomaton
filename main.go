@@ -149,17 +149,39 @@ func updateGrid(grid [][]int, row int) [][]int {
 // Has 5 rulesets to choose from
 func generateCell(left int, center int, right int) int {
 	if ruleset == 1 {
-		return (left + center + right) % 4
+		return (left + center + right) % 5
 	}
 	if ruleset == 2 {
-
+		leftSum := left + center
+		rightSum := right + center
+		return (leftSum + rightSum) % 5
 	}
 	if ruleset == 3 {
-
+		if left == 0 && right == 0 && center == 0 {
+			return 0
+		}
+		if left == 0 && right == 0 {
+			return center
+		}
+		if left == 0 && center == 0 {
+			return right
+		}
+		if right == 0 && center == 0 {
+			return left
+		}
+		if left == 0 {
+			return (center * right) % 5
+		}
+		if right == 0 {
+			return (center * left) % 5
+		}
+		return (left * right) % 5
 	}
 	if ruleset == 4 {
-
+		// Bit manipulation
+		return ((right | left) ^ center) % 5
 	}
+	return (left + center + right) % 5
 
 }
 
