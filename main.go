@@ -58,7 +58,7 @@ var ruleset int
 func main() {
 	var input string
 	fmt.Println("Welcome to my cellular automata generator!")
-	fmt.Println("Would you like to show the grid lines? y/n")
+	fmt.Println("Would you like to show the grid lines? y/n (default: n)")
 	fmt.Scanln(&input)
 	if input == "y" {
 		showGrid = true
@@ -66,8 +66,9 @@ func main() {
 		showGrid = false
 	}
 	fmt.Println("Please select a cellular automata ruleset (1-5):")
+	fmt.Println("1 - 3 are more standard cellular automata rulesets")
+	fmt.Println("4 - 5 are experimental rulesets using bit manipulation")
 	fmt.Scanln(&input)
-
 	inputVal, err := strconv.Atoi(input)
 	if err != nil || inputVal < 1 || inputVal > 5 {
 		fmt.Println("Invalid input, exiting...")
@@ -105,6 +106,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	fmt.Println("Animation saved to out.gif")
 }
 
 // Following cellular automata rules to update the grid
@@ -179,9 +181,11 @@ func generateCell(left int, center int, right int) int {
 	}
 	if ruleset == 4 {
 		// Bit manipulation
-		return ((right | left) ^ center) % 5
+		return ((right << left) ^ center) % 5
 	}
-	return (left + center + right) % 5
+	// ruleset == 5
+	// More bit manipulation
+	return ((left << right) ^ center) % 5
 
 }
 
