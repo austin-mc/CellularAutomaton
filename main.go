@@ -54,6 +54,7 @@ var myPallette = color.Palette{
 
 var showGrid bool
 var ruleset int
+var startCells int
 
 func main() {
 	var input string
@@ -65,7 +66,8 @@ func main() {
 	} else {
 		showGrid = false
 	}
-	fmt.Println("Please select a cellular automata ruleset (1-5):")
+	fmt.Println("")
+	fmt.Println("Select a cellular automata ruleset (1-5):")
 	fmt.Println("1 - 3 are more standard cellular automata rulesets")
 	fmt.Println("4 - 5 are experimental rulesets using bit manipulation")
 	fmt.Scanln(&input)
@@ -75,6 +77,19 @@ func main() {
 		os.Exit(1)
 	}
 	ruleset = inputVal
+	fmt.Println("")
+
+	fmt.Println("How many starting cells to fill (1-4):")
+	fmt.Println("For rulesets 4 and 5 it is highly recommended to use 1")
+	fmt.Println("Example: A value of 2 will start with 2 cells filled in the first row")
+	fmt.Scanln(&input)
+	inputVal, err = strconv.Atoi(input)
+	if err != nil || inputVal < 1 || inputVal > 4 {
+		fmt.Println("Invalid input, exiting...")
+		os.Exit(1)
+	}
+	startCells = inputVal
+	fmt.Println("")
 
 	fmt.Println("Generating animation...")
 	animation = gif.GIF{LoopCount: frameCount}
@@ -116,8 +131,13 @@ func updateGrid(grid [][]int, row int) [][]int {
 	if row == 0 {
 		// First row is all white except the center cell
 		// Which will be given a random color
-		middle := 50
-		grid[row][middle] = rand.Intn(4) + 1
+		for i := 1; i <= startCells; i++ {
+			target := (100 / startCells) * i
+			if target >= 100 {
+				target = 99
+			}
+			grid[row][target] = rand.Intn(4) + 1
+		}
 	} else {
 		prevRow := grid[row-1]
 		currentRow := grid[row]
