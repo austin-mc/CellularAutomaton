@@ -77,7 +77,7 @@ func main() {
 	fmt.Println("4 - 6 are experimental rulesets using bit manipulation")
 	fmt.Scanln(&input)
 	inputVal, err := strconv.Atoi(input)
-	if err != nil || inputVal < 1 || inputVal > 5 {
+	if err != nil || inputVal < 1 || inputVal > 6 {
 		fmt.Println("Invalid input, exiting...")
 		os.Exit(1)
 	}
