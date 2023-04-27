@@ -1,6 +1,11 @@
 /*
 Austin Christiansen
 Cellular Automata Generator
+
+Generates a gif of a cellular automata given a ruleset and starting cells
+
+General idea credit (I didn't use these specific rulesets, just used for inspiration):
+https://mathworld.wolfram.com/ElementaryCellularAutomaton.html
 */
 
 package main
@@ -172,14 +177,17 @@ func updateGrid(grid [][]int, row int) [][]int {
 // Has 6 rulesets to choose from
 func generateCell(left int, center int, right int) int {
 	if ruleset == 1 {
+		// Standard sum ruleset
 		return (left + center + right) % 5
 	}
 	if ruleset == 2 {
+		// Weird sum ruleset
 		leftSum := left + center
 		rightSum := right + center
 		return (leftSum + rightSum) % 5
 	}
 	if ruleset == 3 {
+		// Multiplicative rulesets
 		if left == 0 && right == 0 && center == 0 {
 			return 0
 		}
