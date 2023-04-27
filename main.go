@@ -102,6 +102,7 @@ func main() {
 		grid[i] = make([]int, 100)
 	}
 
+	// Generate each frame
 	var img *image.Paletted
 	for i := 0; i < frameCount; i++ {
 		if i != 0 {
@@ -111,12 +112,12 @@ func main() {
 		appendImage(img, i == frameCount-1)
 	}
 
+	// Create the gif
 	out, err := os.Create("out.gif")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer out.Close()
-
 	err = gif.EncodeAll(out, &animation)
 	if err != nil {
 		log.Fatal(err)
@@ -260,6 +261,7 @@ func drawSquare(x int, y int, squareSize int, color color.RGBA, m *image.RGBA) {
 func appendImage(img *image.Paletted, finalFrame bool) {
 	animation.Image = append(animation.Image, img)
 	if finalFrame {
+		// Let the final frame display for longer
 		animation.Delay = append(animation.Delay, frameDelay*50)
 	} else {
 		animation.Delay = append(animation.Delay, frameDelay)
