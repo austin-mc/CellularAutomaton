@@ -67,9 +67,9 @@ func main() {
 		showGrid = false
 	}
 	fmt.Println("")
-	fmt.Println("Select a cellular automata ruleset (1-5):")
+	fmt.Println("Select a cellular automata ruleset (1-6):")
 	fmt.Println("1 - 3 are more standard cellular automata rulesets")
-	fmt.Println("4 - 5 are experimental rulesets using bit manipulation")
+	fmt.Println("4 - 6 are experimental rulesets using bit manipulation")
 	fmt.Scanln(&input)
 	inputVal, err := strconv.Atoi(input)
 	if err != nil || inputVal < 1 || inputVal > 5 {
@@ -108,7 +108,7 @@ func main() {
 			grid = updateGrid(grid, i-1)
 		}
 		img = drawNextFrame(width, height, squareSize, grid)
-		appendImage(img)
+		appendImage(img, i == frameCount-1)
 	}
 
 	out, err := os.Create("out.gif")
@@ -132,7 +132,7 @@ func updateGrid(grid [][]int, row int) [][]int {
 		// First row is all white except the center cell
 		// Which will be given a random color
 		for i := 1; i <= startCells; i++ {
-			target := (100 / startCells) * i
+			target := (100 / (startCells + 1)) * i
 			if target >= 100 {
 				target = 99
 			}
@@ -168,7 +168,7 @@ func updateGrid(grid [][]int, row int) [][]int {
 }
 
 // Generate the color for the cell given the 3 previous colors
-// Has 5 rulesets to choose from
+// Has 6 rulesets to choose from
 func generateCell(left int, center int, right int) int {
 	if ruleset == 1 {
 		return (left + center + right) % 5
@@ -203,9 +203,14 @@ func generateCell(left int, center int, right int) int {
 		// Bit manipulation
 		return ((right << left) ^ center) % 5
 	}
-	// ruleset == 5
+
+	if ruleset == 5 {
+		// Bit manipulation
+		return ((left << right) ^ center) % 5
+	}
+	// ruleset == 6
 	// More bit manipulation
-	return ((left << right) ^ center) % 5
+	return ((left | right) ^ center) % 5
 
 }
 
@@ -252,7 +257,11 @@ func drawSquare(x int, y int, squareSize int, color color.RGBA, m *image.RGBA) {
 }
 
 // Appends the image to the animation variable
-func appendImage(img *image.Paletted) {
+func appendImage(img *image.Paletted, finalFrame bool) {
 	animation.Image = append(animation.Image, img)
-	animation.Delay = append(animation.Delay, frameDelay)
+	if finalFrame {
+		animation.Delay = append(animation.Delay, frameDelay*50)
+	} else {
+		animation.Delay = append(animation.Delay, frameDelay)
+	}
 }
