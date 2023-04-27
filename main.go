@@ -6,11 +6,15 @@ Cellular Automata Generator
 package main
 
 import (
+	"fmt"
 	"image"
 	"image/color"
 	"image/draw"
 	"image/gif"
+	"log"
 	"math/rand"
+	"os"
+	"strconv"
 	"time"
 )
 
@@ -21,8 +25,8 @@ const (
 	width      = 600
 	height     = 600
 	squareSize = width / 100
-	frameCount = height + 1 // Total number of frames is height + 1 since the first grid is the initial grid
-	frameDelay = 5          // 5 ms delay between frames
+	frameCount = 101 // Total number of frames
+	frameDelay = 5   // 5 ms delay between frames
 )
 
 /*
@@ -48,7 +52,30 @@ var myPallette = color.Palette{
 	darkBlue,
 }
 
+var showGrid bool
+var ruleset int
+
 func main() {
+	var input string
+	fmt.Println("Welcome to my cellular automata generator!")
+	fmt.Println("Would you like to show the grid lines? y/n")
+	fmt.Scanln(&input)
+	if input == "y" {
+		showGrid = true
+	} else {
+		showGrid = false
+	}
+	fmt.Println("Please select a cellular automata ruleset (1-5):")
+	fmt.Scanln(&input)
+
+	inputVal, err := strconv.Atoi(input)
+	if err != nil || inputVal < 1 || inputVal > 5 {
+		fmt.Println("Invalid input, exiting...")
+		os.Exit(1)
+	}
+	ruleset = inputVal
+
+	fmt.Println("Generating animation...")
 	animation = gif.GIF{LoopCount: frameCount}
 	// Random used only to generate color of the first cell
 	rand.Seed(time.Now().Unix())
@@ -68,6 +95,16 @@ func main() {
 		appendImage(img)
 	}
 
+	out, err := os.Create("out.gif")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer out.Close()
+
+	err = gif.EncodeAll(out, &animation)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 // Following cellular automata rules to update the grid
@@ -77,7 +114,7 @@ func updateGrid(grid [][]int, row int) [][]int {
 	if row == 0 {
 		// First row is all white except the center cell
 		// Which will be given a random color
-		middle := width / 2
+		middle := 50
 		grid[row][middle] = rand.Intn(4) + 1
 	} else {
 		prevRow := grid[row-1]
@@ -87,15 +124,15 @@ func updateGrid(grid [][]int, row int) [][]int {
 		var center int
 		var right int
 
-		for i := 0; i < width; i++ {
+		for i := 0; i < 100; i++ {
 			// getting adjacent 3 cells from the previous row
 			// If the cell is on the edge, wrap around to the other side
 			if i == 0 {
-				left = prevRow[width-1]
+				left = prevRow[99]
 			} else {
 				left = prevRow[i-1]
 			}
-			if i == width-1 {
+			if i == 99 {
 				right = prevRow[0]
 			} else {
 				right = prevRow[i+1]
@@ -109,36 +146,29 @@ func updateGrid(grid [][]int, row int) [][]int {
 }
 
 // Generate the color for the cell given the 3 previous colors
+// Has 5 rulesets to choose from
 func generateCell(left int, center int, right int) int {
-	if left == 0 && center == 0 && right == 0 {
-		return 0
+	if ruleset == 1 {
+		return (left + center + right) % 4
+	}
+	if ruleset == 2 {
+
+	}
+	if ruleset == 3 {
+
+	}
+	if ruleset == 4 {
+
 	}
 
 }
 
-// // Draws the initial grid for the automata
-// func drawGrid(width int, height int, squareSize int) *image.Paletted {
-// 	img := image.NewRGBA(image.Rect(0, 0, width, height))
-// 	draw.Draw(img, img.Bounds(), &image.Uniform{black}, image.Point{}, draw.Src)
-// 	for x := 0; x < 100; x++ {
-// 		for y := 0; y < 100; y++ {
-// 			// Draw the squares to make the grid
-// 			drawSquare(x, y, squareSize, white, img)
-// 		}
-// 	}
-
-// 	// Convert to image.Paletted to be used in gif
-// 	palettedImage := image.NewPaletted(img.Bounds(), myPallette)
-// 	draw.Draw(palettedImage, palettedImage.Rect, img, img.Bounds().Min, draw.Src)
-// 	return palettedImage
-// }
-
 func drawNextFrame(width int, height int, squareSize int, grid [][]int) *image.Paletted {
 	img := image.NewRGBA(image.Rect(0, 0, width, height))
 	draw.Draw(img, img.Bounds(), &image.Uniform{black}, image.Point{}, draw.Src)
-	for x := 0; x < 100; x++ {
-		for y := 0; y < 100; y++ {
-			switch grid[x][y] {
+	for y := 0; y < 100; y++ {
+		for x := 0; x < 100; x++ {
+			switch grid[y][x] {
 			case 0:
 				drawSquare(x, y, squareSize, white, img)
 			case 1:
@@ -162,11 +192,11 @@ func drawNextFrame(width int, height int, squareSize int, grid [][]int) *image.P
 // Draws a square on image m at the specified x and y coordinates
 func drawSquare(x int, y int, squareSize int, color color.RGBA, m *image.RGBA) {
 	startX := x * squareSize
-	if x != 0 {
+	if x != 0 && showGrid {
 		startX++
 	}
 	startY := y * squareSize
-	if y != 0 {
+	if y != 0 && showGrid {
 		startY++
 	}
 	endX := (x * squareSize) + squareSize
